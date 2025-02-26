@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+
+	"github.com/mbrunoon/chirpy/helpers"
 )
 
 func handlerValidateChirp(res http.ResponseWriter, req *http.Request) {
@@ -21,19 +23,19 @@ func handlerValidateChirp(res http.ResponseWriter, req *http.Request) {
 	err := decoder.Decode(&params)
 
 	if err != nil {
-		responseError(res, http.StatusInternalServerError, "Error while decoding", err)
+		helpers.ResponseError(res, http.StatusInternalServerError, "Error while decoding", err)
 		return
 	}
 
 	const maxChirpLength = 140
 	if len(params.Body) > maxChirpLength {
-		responseError(res, http.StatusBadRequest, "Chirp max length is 140", nil)
+		helpers.ResponseError(res, http.StatusBadRequest, "Chirp max length is 140", nil)
 		return
 	}
 
 	cleanedBody := cleanProfane(params.Body)
 
-	responseJSON(res, 200, resParams{
+	helpers.ResponseJSON(res, 200, resParams{
 		CleanedBody: cleanedBody,
 	})
 
