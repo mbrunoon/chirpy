@@ -13,4 +13,4 @@ SELECT * FROM users
 WHERE email = $1;
 
 -- name: ResetUsers :exec
-TRUNCATE TABLE users;
+TRUNCATE TABLE users CASCADE;

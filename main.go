@@ -10,8 +10,8 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 	_ "github.com/lib/pq"
+	"github.com/mbrunoon/chirpy/app/controllers"
 	"github.com/mbrunoon/chirpy/app/models"
-	"github.com/mbrunoon/chirpy/controllers"
 )
 
 type ApiConfig struct {
@@ -52,8 +52,11 @@ func main() {
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", fileServe)))
 
 	mux.HandleFunc("GET /api/healthz", handlerHealthz)
-	mux.HandleFunc("POST /api/validate_chirp", handlerValidateChirp)
 	mux.HandleFunc("POST /api/users", app.UserCreate)
+
+	mux.HandleFunc("GET /api/chirps", app.ChirpyList)
+	mux.HandleFunc("GET /api/chirps/{chirpID}", app.ChirpyShow)
+	mux.HandleFunc("POST /api/chirps", app.ChirpyCreate)
 
 	mux.HandleFunc("POST /admin/reset", apiCfg.HandlerMetricsReset)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
@@ -99,11 +102,17 @@ func (cfg *ApiConfig) handlerMetrics(res http.ResponseWriter, req *http.Request)
 func (cfg *ApiConfig) HandlerMetricsReset(res http.ResponseWriter, req *http.Request) {
 	cfg.fileServerHits.Swap(0)
 
+	fmt.Println("PLATFORM:", os.Getenv("PLATFORM"))
+
 	if os.Getenv("PLATFORM") == "development" {
-		cfg.models.ResetUsers(context.Background())
+		err := cfg.models.ResetUsers(context.Background())
+		if err != nil {
+			http.Error(res, "Failed to reset users", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	res.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	res.WriteHeader(http.StatusOK)
-	res.Write([]byte("Hits reseted"))
+	res.Write([]byte("Hits and users reset"))
 }
